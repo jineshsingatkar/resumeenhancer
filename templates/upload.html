@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Resume - AI Resume Enhancer</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .upload-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-info) 100%);
+            padding: 40px 0;
+        }
+        .upload-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .upload-area {
+            border: 3px dashed var(--bs-primary);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(13, 110, 253, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .upload-area:hover {
+            border-color: var(--bs-info);
+            background: rgba(13, 202, 240, 0.1);
+            transform: translateY(-2px);
+        }
+        .upload-area.dragover {
+            border-color: var(--bs-success);
+            background: rgba(25, 135, 84, 0.1);
+            transform: scale(1.02);
+        }
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--bs-primary);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover .upload-icon {
+            color: var(--bs-info);
+            transform: scale(1.1);
+        }
+        .template-preview {
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .template-preview:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-color: var(--bs-primary);
+        }
+        .template-preview.selected {
+            border-color: var(--bs-success);
+            box-shadow: 0 5px 15px rgba(25, 135, 84, 0.3);
+        }
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+        .ai-features {
+            background: linear-gradient(135deg, var(--bs-success), var(--bs-info));
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .file-error {
+            color: var(--bs-danger);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        .file-success {
+            color: var(--bs-success);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        @media (max-width: 768px) {
+            .upload-area {
+                padding: 30px 20px;
+            }
+            .upload-icon {
+                font-size: 3rem;
+            }
+            .template-preview {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="text-white mb-3">
+                    <i class="fas fa-robot me-3"></i>AI-Powered Resume Enhancement
+                </h1>
+                <p class="text-light fs-5">Transform your resume with intelligent optimization</p>
+            </div>
+
+            <!-- AI Features Banner -->
+            <div class="ai-features text-center">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-brain fa-lg"></i>
+                        </div>
+                        <h6>AI Analysis</h6>
+                        <small>Advanced keyword optimization</small>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-chart-line fa-lg"></i>
+                        </div>
+                        <h6>ATS Scoring</h6>
+                        <small>Real-time compatibility check</small>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-magic fa-lg"></i>
+                        </div>
+                        <h6>Smart Enhancement</h6>
+                        <small>Intelligent content improvement</small>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="feature-icon mx-auto">
+                            <i class="fas fa-download fa-lg"></i>
+                        </div>
+                        <h6>Instant Download</h6>
+                        <small>Professional formatted output</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="upload-card p-5">
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                            {{ form.hidden_tag() }}
+
+                            <!-- Template Selection -->
+                            <div class="mb-5">
+                                <h5 class="mb-4">
+                                    <i class="fas fa-palette me-2"></i>Choose Your Template
+                                </h5>
+                                <div class="row">
+                                    {% for template in templates %}
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <div class="template-preview card h-100" onclick="selectTemplate({{ template.id }}, this)">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                                                <h6 class="card-title">{{ template.name }}</h6>
+                                                <p class="card-text small text-muted">{{ template.description[:50] }}...</p>
+                                                {% if template.is_premium %}
+                                                <span class="badge bg-warning">Premium</span>
+                                                {% endif %}
+                                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="previewTemplate({{ template.id }}, event)">
+                                                    <i class="fas fa-eye me-1"></i>Preview
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {{ form.template_id(class="d-none", id="selectedTemplate") }}
+                            </div>
+
+                            <!-- File Upload -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload Your Resume
+                                </h5>
+                                <div class="upload-area" id="uploadArea">
+                                    {{ form.resume_file(class="d-none", id="resumeFile", accept=".pdf,.docx") }}
+                                    <div class="upload-content">
+                                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                        <h4 class="mb-3">Drag & Drop Your Resume</h4>
+                                        <p class="text-muted mb-4">or click to browse files</p>
+                                        <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('resumeFile').click()">
+                                            <i class="fas fa-folder-open me-2"></i>Choose File
+                                        </button>
+                                        <div class="mt-3">
+                                            <small class="text-muted">
+                                                Supports PDF and DOCX files up to 16MB
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="file-info d-none">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                        <h5 class="file-name"></h5>
+                                        <p class="file-details text-muted"></p>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetUpload()">
+                                            <i class="fas fa-times me-2"></i>Change File
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="fileError" class="file-error d-none"></div>
+                                <div id="fileSuccess" class="file-success d-none"></div>
+                                
+                                <!-- Upload Progress -->
+                                <div class="progress-container" id="progressContainer">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>Uploading...</span>
+                                        <span id="progressPercent">0%</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" id="progressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Job Description -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-briefcase me-2"></i>Job Description 
+                                    <span class="badge bg-info">Optional</span>
+                                </h5>
+                                {{ form.job_description(class="form-control", rows="6", placeholder="Paste the job description here to get targeted optimization. Leave blank for general enhancement.") }}
+                                <div class="form-text">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    <strong>Pro Tip:</strong> Including a job description helps our AI tailor your resume with relevant keywords and skills.
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success btn-lg px-5 py-3" id="submitBtn" disabled>
+                                    <i class="fas fa-rocket me-2"></i>
+                                    <span id="submitText">Enhance My Resume</span>
+                                    <div class="spinner-border spinner-border-sm ms-2 d-none" id="submitSpinner"></div>
+                                </button>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        Processing typically takes 30-60 seconds
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Dashboard -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Preview Modal -->
+    <div class="modal fade" id="templateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Template Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img src="" alt="Template Preview" class="img-fluid rounded" id="previewImage">
+                    <div class="mt-3">
+                        <h6 id="previewTitle"></h6>
+                        <p id="previewDescription" class="text-muted"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="selectFromPreview()">Use This Template</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedTemplateId = 1;
+        let currentPreviewTemplate = null;
+
+        // Template selection
+        function selectTemplate(templateId, element) {
+            selectedTemplateId = templateId;
+            document.getElementById('selectedTemplate').value = templateId;
+            
+            // Update visual selection
+            document.querySelectorAll('.template-preview').forEach(t => t.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            checkFormValidity();
+        }
+
+        // Template preview
+        function previewTemplate(templateId, event) {
+            event.stopPropagation();
+            currentPreviewTemplate = templateId;
+            
+            // Show modal with template preview
+            document.getElementById('previewImage').src = `/static/images/template_${templateId}_preview.jpg`;
+            document.getElementById('previewTitle').textContent = `Template ${templateId}`;
+            document.getElementById('previewDescription').textContent = 'Professional resume template optimized for ATS systems.';
+            
+            new bootstrap.Modal(document.getElementById('templateModal')).show();
+        }
+
+        function selectFromPreview() {
+            if (currentPreviewTemplate) {
+                const templateElement = document.querySelector(`[onclick*="${currentPreviewTemplate}"]`);
+                selectTemplate(currentPreviewTemplate, templateElement);
+                bootstrap.Modal.getInstance(document.getElementById('templateModal')).hide();
+            }
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('resumeFile');
+        const uploadContent = uploadArea.querySelector('.upload-content');
+        const fileInfo = uploadArea.querySelector('.file-info');
+
+        // Drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            uploadArea.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            uploadArea.classList.remove('dragover');
+        }
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        }
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Validate file
+            const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const maxSize = 16 * 1024 * 1024; // 16MB
+
+            if (!validTypes.includes(file.type)) {
+                showError('Please upload a PDF or DOCX file only.');
+                return;
+            }
+
+            if (file.size > maxSize) {
+                showError('File size must be less than 16MB.');
+                return;
+            }
+
+            // Show file info
+            uploadContent.classList.add('d-none');
+            fileInfo.classList.remove('d-none');
+            fileInfo.querySelector('.file-name').textContent = file.name;
+            fileInfo.querySelector('.file-details').textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+
+            showSuccess('File ready for upload!');
+            checkFormValidity();
+        }
+
+        function resetUpload() {
+            fileInput.value = '';
+            uploadContent.classList.remove('d-none');
+            fileInfo.classList.add('d-none');
+            hideMessages();
+            checkFormValidity();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('fileError');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('d-none');
+            document.getElementById('fileSuccess').classList.add('d-none');
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('fileSuccess');
+            successDiv.textContent = message;
+            successDiv.classList.remove('d-none');
+            document.getElementById('fileError').classList.add('d-none');
+        }
+
+        function hideMessages() {
+            document.getElementById('fileError').classList.add('d-none');
+            document.getElementById('fileSuccess').classList.add('d-none');
+        }
+
+        function checkFormValidity() {
+            const hasFile = fileInput.files.length > 0;
+            const hasTemplate = selectedTemplateId > 0;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = !(hasFile && hasTemplate);
+        }
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!fileInput.files.length) {
+                showError('Please select a file to upload.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            const progressContainer = document.getElementById('progressContainer');
+
+            // Disable form and show loading
+            submitBtn.disabled = true;
+            submitText.textContent = 'Processing...';
+            submitSpinner.classList.remove('d-none');
+            progressContainer.style.display = 'block';
+
+            // Simulate upload progress
+            let progress = 0;
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                
+                progressBar.style.width = progress + '%';
+                progressPercent.textContent = Math.round(progress) + '%';
+            }, 200);
+
+            // Submit form
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error('Upload failed');
+                }
+            })
+            .then(html => {
+                document.body.innerHTML = html;
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                progressContainer.style.display = 'none';
+                submitBtn.disabled = false;
+                submitText.textContent = 'Enhance My Resume';
+                submitSpinner.classList.add('d-none');
+                showError('Upload failed. Please try again.');
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select first template by default
+            const firstTemplate = document.querySelector('.template-preview');
+            if (firstTemplate) {
+                selectTemplate(1, firstTemplate);
+            }
+        });
+    </script>
+</body>
+</html>

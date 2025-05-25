@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - AI Resume Enhancer</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .register-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-secondary) 100%);
+            padding: 40px 0;
+        }
+        .register-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .form-control {
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .form-control:focus {
+            border-color: var(--bs-info);
+            box-shadow: 0 0 0 0.2rem rgba(13, 202, 240, 0.25);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .btn-register {
+            border-radius: 12px;
+            padding: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .benefits-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 768px) {
+            .register-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="register-card p-5">
+                        <div class="text-center mb-5">
+                            <i class="fas fa-user-plus fa-3x text-info mb-3"></i>
+                            <h2 class="text-white mb-2">Create Your Account</h2>
+                            <p class="text-light">Join thousands of professionals enhancing their careers</p>
+                        </div>
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <form method="POST">
+                                    {{ form.hidden_tag() }}
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-4">
+                                            {{ form.first_name.label(class="form-label text-light") }}
+                                            {{ form.first_name(class="form-control", placeholder="First Name") }}
+                                            {% for error in form.first_name.errors %}
+                                                <div class="text-danger small mt-1">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-4">
+                                            {{ form.last_name.label(class="form-label text-light") }}
+                                            {{ form.last_name(class="form-control", placeholder="Last Name") }}
+                                            {% for error in form.last_name.errors %}
+                                                <div class="text-danger small mt-1">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        {{ form.email.label(class="form-label text-light") }}
+                                        {{ form.email(class="form-control", placeholder="Enter your email address") }}
+                                        {% for error in form.email.errors %}
+                                            <div class="text-danger small mt-1">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        {{ form.password.label(class="form-label text-light") }}
+                                        {{ form.password(class="form-control", placeholder="Create a strong password") }}
+                                        {% for error in form.password.errors %}
+                                            <div class="text-danger small mt-1">{{ error }}</div>
+                                        {% endfor %}
+                                        <small class="text-muted">Minimum 8 characters required</small>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        {{ form.password2.label(class="form-label text-light") }}
+                                        {{ form.password2(class="form-control", placeholder="Confirm your password") }}
+                                        {% for error in form.password2.errors %}
+                                            <div class="text-danger small mt-1">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <div class="d-grid mb-4">
+                                        {{ form.submit(class="btn btn-info btn-register") }}
+                                    </div>
+                                </form>
+                                
+                                <div class="text-center">
+                                    <p class="text-light mb-2">Already have an account?</p>
+                                    <a href="{{ url_for('login') }}" class="btn btn-outline-light">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="benefits-card">
+                                    <h5 class="text-info mb-3">
+                                        <i class="fas fa-gift me-2"></i>Free Account Includes:
+                                    </h5>
+                                    <ul class="list-unstyled text-light">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            5 Resume enhancements per month
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Basic templates access
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            AI-powered keyword optimization
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Resume scoring analysis
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            Job application tracking
+                                        </li>
+                                    </ul>
+                                    
+                                    <div class="mt-3 pt-3 border-top border-light border-opacity-25">
+                                        <h6 class="text-warning">
+                                            <i class="fas fa-crown me-2"></i>Premium Features:
+                                        </h6>
+                                        <small class="text-muted">
+                                            • Unlimited enhancements<br>
+                                            • Premium templates<br>
+                                            • Batch processing<br>
+                                            • Advanced analytics
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <small class="text-muted">
+                                By creating an account, you agree to our terms of service and privacy policy
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

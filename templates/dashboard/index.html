@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AI Resume Enhancer</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .stat-icon {
+            font-size: 3rem;
+            opacity: 0.8;
+        }
+        .recent-activity {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .sidebar {
+            background: var(--bs-dark);
+            min-height: 100vh;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            color: var(--bs-light);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 5px 10px;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: var(--bs-primary);
+            color: white;
+        }
+        .main-content {
+            padding: 30px;
+            background: var(--bs-gray-100);
+            min-height: 100vh;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                top: 0;
+                width: 250px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .mobile-toggle {
+                display: block;
+            }
+        }
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: var(--bs-primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="p-4">
+                <h4 class="navbar-brand text-center">
+                    <i class="fas fa-robot me-2"></i>AI Resume
+                </h4>
+            </div>
+            
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-home me-3"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('upload_resume') }}">
+                        <i class="fas fa-upload me-3"></i>Upload Resume
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('batch_upload') }}">
+                        <i class="fas fa-layer-group me-3"></i>Batch Processing
+                        <span class="badge bg-warning ms-2">Premium</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('my_resumes') }}">
+                        <i class="fas fa-file-alt me-3"></i>My Resumes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('applications') }}">
+                        <i class="fas fa-briefcase me-3"></i>Applications
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('templates') }}">
+                        <i class="fas fa-palette me-3"></i>Templates
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('pricing') }}">
+                        <i class="fas fa-crown me-3"></i>Upgrade
+                    </a>
+                </li>
+                
+                {% if current_user.is_admin %}
+                <li class="nav-item mt-4">
+                    <h6 class="text-muted px-3">ADMIN</h6>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                        <i class="fas fa-cog me-3"></i>Admin Panel
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item mt-auto">
+                    <a class="nav-link" href="{{ url_for('profile') }}">
+                        <i class="fas fa-user me-3"></i>Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">
+                        <i class="fas fa-sign-out-alt me-3"></i>Logout
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content flex-grow-1">
+            <!-- Welcome Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">Welcome back, {{ current_user.get_full_name() }}!</h2>
+                    <p class="text-muted">Here's what's happening with your resume optimization</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-{{ 'warning' if current_user.subscription_type == 'premium' else 'success' if current_user.subscription_type == 'enterprise' else 'secondary' }} fs-6">
+                        {{ current_user.subscription_type.title() }} Plan
+                    </span>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h3 class="mt-3 mb-1">{{ user_stats.total_resumes }}</h3>
+                        <p class="mb-0">Total Resumes</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <h3 class="mt-3 mb-1">{{ user_stats.total_applications }}</h3>
+                        <p class="mb-0">Applications</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="mt-3 mb-1">{{ "%.1f"|format(user_stats.avg_score) }}</h3>
+                        <p class="mb-0">Avg AI Score</p>
+                    </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card text-center">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-month"></i>
+                        </div>
+                        <h3 class="mt-3 mb-1">{{ user_stats.this_month }}</h3>
+                        <p class="mb-0">This Month</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card dashboard-card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">
+                                <i class="fas fa-rocket me-2"></i>Quick Actions
+                            </h5>
+                            <div class="row">
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <a href="{{ url_for('upload_resume') }}" class="btn btn-primary w-100 py-3">
+                                        <i class="fas fa-upload d-block mb-2 fa-2x"></i>
+                                        Upload New Resume
+                                    </a>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <a href="{{ url_for('templates') }}" class="btn btn-info w-100 py-3">
+                                        <i class="fas fa-palette d-block mb-2 fa-2x"></i>
+                                        Browse Templates
+                                    </a>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <a href="{{ url_for('add_application') }}" class="btn btn-success w-100 py-3">
+                                        <i class="fas fa-plus d-block mb-2 fa-2x"></i>
+                                        Add Application
+                                    </a>
+                                </div>
+                                <div class="col-lg-3 col-md-6 mb-3">
+                                    <a href="{{ url_for('batch_upload') }}" class="btn btn-warning w-100 py-3">
+                                        <i class="fas fa-layer-group d-block mb-2 fa-2x"></i>
+                                        Batch Process
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    <div class="card dashboard-card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">
+                                <i class="fas fa-history me-2"></i>Recent Resumes
+                            </h5>
+                            
+                            {% if recent_resumes %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>AI Score</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for resume in recent_resumes %}
+                                        <tr>
+                                            <td>
+                                                <i class="fas fa-file-alt me-2"></i>
+                                                {{ resume.title[:50] }}...
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if resume.ai_score >= 80 else 'warning' if resume.ai_score >= 60 else 'danger' }}">
+                                                    {{ "%.1f"|format(resume.ai_score) }}
+                                                </span>
+                                            </td>
+                                            <td>{{ resume.created_at.strftime('%m/%d/%Y') }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="viewResumeScore({{ resume.id }})">
+                                                    <i class="fas fa-chart-bar"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No resumes yet</h5>
+                                <p class="text-muted">Upload your first resume to get started!</p>
+                                <a href="{{ url_for('upload_resume') }}" class="btn btn-primary">
+                                    <i class="fas fa-upload me-2"></i>Upload Resume
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 mb-4">
+                    <div class="card dashboard-card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">
+                                <i class="fas fa-briefcase me-2"></i>Recent Applications
+                            </h5>
+                            
+                            {% if recent_applications %}
+                            <div class="recent-activity">
+                                {% for app in recent_applications %}
+                                <div class="d-flex align-items-center mb-3 p-3 rounded" style="background: var(--bs-gray-100);">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-building text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ app.job_title }}</h6>
+                                        <p class="mb-1 text-muted">{{ app.company_name }}</p>
+                                        <small class="text-muted">{{ app.application_date.strftime('%m/%d/%Y') }}</small>
+                                    </div>
+                                    <span class="badge bg-{{ 'success' if app.status == 'interview' else 'primary' if app.status == 'applied' else 'warning' }}">
+                                        {{ app.status.title() }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-briefcase fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">No applications tracked yet</p>
+                                <a href="{{ url_for('add_application') }}" class="btn btn-sm btn-outline-primary">
+                                    Add Application
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resume Score Modal -->
+    <div class="modal fade" id="scoreModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">AI Resume Score Analysis</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="scoreModalBody">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+
+        function viewResumeScore(resumeId) {
+            const modal = new bootstrap.Modal(document.getElementById('scoreModal'));
+            modal.show();
+            
+            fetch(`/api/resume-score/${resumeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('scoreModalBody').innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Score analysis not available for this resume.
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById('scoreModalBody').innerHTML = `
+                            <div class="text-center mb-4">
+                                <div class="display-1 text-primary">${data.overall_score}</div>
+                                <h5>Overall AI Score</h5>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Keyword Match</label>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: ${data.breakdown.keyword_match}%">${data.breakdown.keyword_match}%</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Format Quality</label>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" style="width: ${data.breakdown.format_quality}%">${data.breakdown.format_quality}%</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Content Depth</label>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" style="width: ${data.breakdown.content_depth}%">${data.breakdown.content_depth}%</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">ATS Compatibility</label>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" style="width: ${data.breakdown.ats_compatibility}%">${data.breakdown.ats_compatibility}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('scoreModalBody').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            Failed to load score analysis.
+                        </div>
+                    `;
+                });
+        }
+
+        // Close mobile sidebar when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !toggle.contains(event.target) && 
+                sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
