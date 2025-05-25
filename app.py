@@ -74,11 +74,10 @@ def index():
         upload_path = None
         
         try:
-            # Check if job description was provided
+            # Get job description (optional but recommended)
             job_description = request.form.get('job_description', '').strip()
             if not job_description:
-                flash('Please provide a job description.', 'error')
-                return render_template('index.html')
+                job_description = "General professional role requiring relevant skills and experience."
 
             # Check if file was uploaded
             if 'resume_file' not in request.files:

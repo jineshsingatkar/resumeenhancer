@@ -36,12 +36,9 @@ function validateForm() {
     // Clear previous error states
     clearErrorStates();
     
-    // Validate job description
-    if (!jobDescription.value.trim()) {
-        showFieldError(jobDescription, 'Please provide a job description.');
-        isValid = false;
-    } else if (jobDescription.value.trim().length < 50) {
-        showFieldError(jobDescription, 'Job description should be at least 50 characters long.');
+    // Validate job description (optional but recommended)
+    if (jobDescription.value.trim() && jobDescription.value.trim().length < 50) {
+        showFieldError(jobDescription, 'Job description should be at least 50 characters for better results.');
         isValid = false;
     }
     
