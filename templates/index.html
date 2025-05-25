@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Modifier</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-robot me-3"></i>
+                AI Resume Modifier
+            </h1>
+            <p class="lead text-muted">
+                Automatically tailor your resume to match job descriptions using AI-powered analysis
+            </p>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-upload me-2"></i>
+                            Upload Your Resume & Job Description
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" id="resumeForm">
+                            <!-- Job Description Section -->
+                            <div class="mb-4">
+                                <label for="job_description" class="form-label">
+                                    <i class="fas fa-briefcase me-2"></i>
+                                    Job Description
+                                </label>
+                                <textarea 
+                                    class="form-control" 
+                                    id="job_description" 
+                                    name="job_description" 
+                                    rows="8" 
+                                    placeholder="Paste the complete job description here. The more detailed, the better the AI can tailor your resume..."
+                                    required
+                                ></textarea>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Include requirements, skills, responsibilities, and qualifications for best results.
+                                </div>
+                            </div>
+
+                            <!-- File Upload Section -->
+                            <div class="mb-4">
+                                <label for="resume_file" class="form-label">
+                                    <i class="fas fa-file-word me-2"></i>
+                                    Resume File
+                                </label>
+                                <input 
+                                    type="file" 
+                                    class="form-control" 
+                                    id="resume_file" 
+                                    name="resume_file" 
+                                    accept=".docx"
+                                    required
+                                >
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Upload your resume in DOCX format (max 16MB). PDF and other formats are not supported.
+                                </div>
+                            </div>
+
+                            <!-- Processing Instructions -->
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    How It Works
+                                </h6>
+                                <ul class="mb-0">
+                                    <li>AI analyzes the job description to extract key requirements and skills</li>
+                                    <li>Your resume is parsed to identify existing content and structure</li>
+                                    <li>Content is automatically enhanced with relevant keywords and requirements</li>
+                                    <li>A new tailored resume is generated for download</li>
+                                </ul>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-magic me-2"></i>
+                                    Generate Tailored Resume
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Features Section -->
+                <div class="row mt-5">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-brain fa-2x text-primary mb-3"></i>
+                                <h5>AI-Powered Analysis</h5>
+                                <p class="card-text">Advanced NLP models analyze job descriptions to identify key requirements and skills.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sync-alt fa-2x text-success mb-3"></i>
+                                <h5>Automatic Tailoring</h5>
+                                <p class="card-text">Your resume is automatically modified to highlight relevant experience and skills.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-download fa-2x text-info mb-3"></i>
+                                <h5>Instant Download</h5>
+                                <p class="card-text">Get your tailored resume immediately in professional DOCX format.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
