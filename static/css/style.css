@@ -6,6 +6,88 @@
     --warning-color: #ffc107;
     --danger-color: #dc3545;
     --info-color: #17a2b8;
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-magic: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+/* Hero Section Enhancements */
+.hero-section {
+    padding: 60px 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 20px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+    z-index: 1;
+}
+
+.hero-section > * {
+    position: relative;
+    z-index: 2;
+}
+
+.floating-icon {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+/* Stats Row */
+.stats-row {
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+    min-width: 120px;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--bs-body-color);
+    opacity: 0.8;
+    margin-top: 5px;
 }
 
 /* Body and layout */
@@ -165,24 +247,72 @@ textarea.form-control {
     100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* File upload styling */
-.form-control[type="file"] {
-    padding: 8px 12px;
-}
-
-.form-control[type="file"]::-webkit-file-upload-button {
-    background: var(--bs-secondary);
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    margin-right: 12px;
-    color: white;
+/* Enhanced File Upload Area */
+.upload-area {
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 15px;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%);
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
 }
 
-.form-control[type="file"]::-webkit-file-upload-button:hover {
-    background: var(--bs-secondary-dark);
+.upload-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.upload-area:hover {
+    border-color: var(--accent-color);
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    transform: translateY(-2px);
+}
+
+.upload-area:hover::before {
+    left: 100%;
+}
+
+.upload-area.dragover {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%);
+    transform: scale(1.02);
+}
+
+.upload-content {
+    transition: all 0.3s ease;
+}
+
+.upload-success {
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.upload-area .btn {
+    transition: all 0.3s ease;
+}
+
+.upload-area .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
 }
 
 /* Progress indicator */

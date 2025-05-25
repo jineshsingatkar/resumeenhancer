@@ -160,18 +160,80 @@ function showProcessingIndicator() {
  */
 function initializeFileUpload() {
     const fileInput = document.getElementById('resume_file');
+    const uploadArea = document.getElementById('uploadArea');
     
-    if (fileInput) {
+    if (fileInput && uploadArea) {
+        // File input change handler
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                updateFileInputLabel(file);
+                showFileSelected(file);
                 validateFileSelection(file);
             }
         });
         
+        // Make upload area clickable
+        uploadArea.addEventListener('click', function(e) {
+            if (!e.target.closest('button')) {
+                fileInput.click();
+            }
+        });
+        
         // Add drag and drop functionality
-        addDragDropSupport(fileInput);
+        addEnhancedDragDrop(uploadArea, fileInput);
+    }
+}
+
+/**
+ * Show file selected state in enhanced upload area
+ */
+function showFileSelected(file) {
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadContent = uploadArea.querySelector('.upload-content');
+    const uploadSuccess = uploadArea.querySelector('.upload-success');
+    const fileName = uploadSuccess.querySelector('.file-name');
+    const fileDetails = uploadSuccess.querySelector('.file-details');
+    
+    // Hide upload content and show success state
+    uploadContent.classList.add('d-none');
+    uploadSuccess.classList.remove('d-none');
+    
+    // Update file information
+    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+    const fileType = file.name.split('.').pop().toUpperCase();
+    
+    fileName.textContent = file.name;
+    fileDetails.innerHTML = `
+        <i class="fas fa-file-${fileType.toLowerCase() === 'pdf' ? 'pdf' : 'word'} me-2"></i>
+        ${fileType} File • ${fileSize} MB
+    `;
+    
+    // Add success styling to upload area
+    uploadArea.classList.add('file-selected');
+}
+
+/**
+ * Reset file upload to initial state
+ */
+function resetFileUpload() {
+    const fileInput = document.getElementById('resume_file');
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadContent = uploadArea.querySelector('.upload-content');
+    const uploadSuccess = uploadArea.querySelector('.upload-success');
+    
+    // Reset file input
+    fileInput.value = '';
+    
+    // Reset UI state
+    uploadContent.classList.remove('d-none');
+    uploadSuccess.classList.add('d-none');
+    uploadArea.classList.remove('file-selected');
+    
+    // Clear any validation states
+    fileInput.classList.remove('is-invalid', 'is-valid');
+    const errorMessage = uploadArea.parentNode.querySelector('.invalid-feedback');
+    if (errorMessage) {
+        errorMessage.remove();
     }
 }
 
@@ -218,29 +280,26 @@ function validateFileSelection(file) {
 }
 
 /**
- * Add drag and drop support for file upload
+ * Add enhanced drag and drop support for file upload
  */
-function addDragDropSupport(fileInput) {
-    const card = fileInput.closest('.card');
-    if (!card) return;
-    
+function addEnhancedDragDrop(uploadArea, fileInput) {
     // Prevent default drag behaviors
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        card.addEventListener(eventName, preventDefaults, false);
+        uploadArea.addEventListener(eventName, preventDefaults, false);
         document.body.addEventListener(eventName, preventDefaults, false);
     });
     
     // Highlight drop area when item is dragged over it
     ['dragenter', 'dragover'].forEach(eventName => {
-        card.addEventListener(eventName, highlight, false);
+        uploadArea.addEventListener(eventName, highlight, false);
     });
     
     ['dragleave', 'drop'].forEach(eventName => {
-        card.addEventListener(eventName, unhighlight, false);
+        uploadArea.addEventListener(eventName, unhighlight, false);
     });
     
     // Handle dropped files
-    card.addEventListener('drop', handleDrop, false);
+    uploadArea.addEventListener('drop', handleDrop, false);
     
     function preventDefaults(e) {
         e.preventDefault();
@@ -248,11 +307,11 @@ function addDragDropSupport(fileInput) {
     }
     
     function highlight(e) {
-        card.classList.add('border-primary', 'bg-light');
+        uploadArea.classList.add('dragover');
     }
     
     function unhighlight(e) {
-        card.classList.remove('border-primary', 'bg-light');
+        uploadArea.classList.remove('dragover');
     }
     
     function handleDrop(e) {

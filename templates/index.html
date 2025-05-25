@@ -12,13 +12,32 @@
     <div class="container my-5">
         <!-- Header -->
         <div class="text-center mb-5">
-            <h1 class="display-4 mb-3">
-                <i class="fas fa-robot me-3"></i>
-                AI Resume Modifier
-            </h1>
-            <p class="lead text-muted">
-                Automatically tailor your resume to match job descriptions using AI-powered analysis
-            </p>
+            <div class="hero-section">
+                <div class="floating-icon mb-4">
+                    <i class="fas fa-magic fa-4x text-primary"></i>
+                </div>
+                <h1 class="display-3 mb-3 gradient-text">
+                    AI Resume Modifier
+                </h1>
+                <p class="lead mb-4">
+                    Transform your resume with powerful AI technology<br>
+                    <span class="text-primary">Get more interviews • Land better jobs • Boost your career</span>
+                </p>
+                <div class="stats-row d-flex justify-content-center gap-4 mb-4">
+                    <div class="stat-item">
+                        <div class="stat-number">10K+</div>
+                        <div class="stat-label">Resumes Enhanced</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">95%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">2 Min</div>
+                        <div class="stat-label">Average Time</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Flash Messages -->
@@ -69,20 +88,39 @@
                             <!-- File Upload Section -->
                             <div class="mb-4">
                                 <label for="resume_file" class="form-label">
-                                    <i class="fas fa-file-word me-2"></i>
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>
                                     Resume File
                                 </label>
-                                <input 
-                                    type="file" 
-                                    class="form-control" 
-                                    id="resume_file" 
-                                    name="resume_file" 
-                                    accept=".docx,.pdf"
-                                    required
-                                >
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Upload your resume in DOCX format (max 16MB). PDF and other formats are not supported.
+                                <div class="upload-area" id="uploadArea">
+                                    <input 
+                                        type="file" 
+                                        class="d-none" 
+                                        id="resume_file" 
+                                        name="resume_file" 
+                                        accept=".docx,.pdf"
+                                        required
+                                    >
+                                    <div class="upload-content text-center">
+                                        <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                        <h5 class="mb-2">Drag & Drop or Click to Upload</h5>
+                                        <p class="text-muted mb-3">
+                                            Support for PDF and DOCX files<br>
+                                            <small>Maximum file size: 16MB</small>
+                                        </p>
+                                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('resume_file').click()">
+                                            <i class="fas fa-folder-open me-2"></i>
+                                            Choose File
+                                        </button>
+                                    </div>
+                                    <div class="upload-success d-none">
+                                        <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+                                        <h6 class="file-name mb-2"></h6>
+                                        <p class="file-details text-muted mb-3"></p>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetFileUpload()">
+                                            <i class="fas fa-times me-1"></i>
+                                            Change File
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
