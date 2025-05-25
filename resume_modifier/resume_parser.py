@@ -1,6 +1,8 @@
 import logging
 from docx import Document
 import re
+import PyPDF2
+import os
 
 class ResumeParser:
     def __init__(self, resume_path):
@@ -20,62 +22,12 @@ class ResumeParser:
             dict: Structured resume data with summary, skills, experience, and projects
         """
         try:
-            doc = Document(self.resume_path)
-            
-            resume_data = {
-                "summary": "",
-                "skills": [],
-                "experience": [],
-                "projects": [],
-                "education": [],
-                "contact_info": {},
-                "raw_text": ""
-            }
-            
-            # Extract all text for processing
-            all_text = []
-            current_section = None
-            
-            for paragraph in doc.paragraphs:
-                text = paragraph.text.strip()
-                if not text:
-                    continue
-                    
-                all_text.append(text)
+            # Check if file is PDF or DOCX
+            if self.resume_path.lower().endswith('.pdf'):
+                return self._parse_pdf_resume()
+            else:
+                return self._parse_docx_resume()
                 
-                # Identify sections
-                section = self._identify_section(text)
-                if section:
-                    current_section = section
-                    continue
-                
-                # Parse content based on current section
-                if current_section == "summary":
-                    resume_data["summary"] = self._parse_summary(text, resume_data["summary"])
-                elif current_section == "skills":
-                    resume_data["skills"].extend(self._parse_skills(text))
-                elif current_section == "experience":
-                    resume_data["experience"].extend(self._parse_experience(text))
-                elif current_section == "projects":
-                    resume_data["projects"].extend(self._parse_projects(text))
-                elif current_section == "education":
-                    resume_data["education"].extend(self._parse_education(text))
-                elif current_section == "contact":
-                    resume_data["contact_info"].update(self._parse_contact(text))
-            
-            # Join all text for backup processing
-            resume_data["raw_text"] = "\n".join(all_text)
-            
-            # If sections weren't clearly identified, try alternative parsing
-            if not resume_data["summary"] and not resume_data["skills"]:
-                resume_data = self._fallback_parsing(all_text, resume_data)
-            
-            # Clean up and deduplicate
-            resume_data = self._clean_resume_data(resume_data)
-            
-            logging.debug(f"Parsed resume data: {resume_data}")
-            return resume_data
-            
         except Exception as e:
             logging.error(f"Error parsing resume: {e}")
             return {
@@ -87,6 +39,104 @@ class ResumeParser:
                 "contact_info": {},
                 "raw_text": ""
             }
+    
+    def _parse_pdf_resume(self):
+        """Parse PDF resume file."""
+        try:
+            with open(self.resume_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                all_text = []
+                
+                for page in pdf_reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        all_text.extend(text.split('\n'))
+                
+                return self._process_text_data(all_text)
+                
+        except Exception as e:
+            logging.error(f"Error parsing PDF: {e}")
+            return self._get_default_resume_data()
+    
+    def _parse_docx_resume(self):
+        """Parse DOCX resume file."""
+        try:
+            doc = Document(self.resume_path)
+            all_text = []
+            
+            for paragraph in doc.paragraphs:
+                text = paragraph.text.strip()
+                if text:
+                    all_text.append(text)
+            
+            return self._process_text_data(all_text)
+                
+        except Exception as e:
+            logging.error(f"Error parsing DOCX: {e}")
+            return self._get_default_resume_data()
+    
+    def _process_text_data(self, all_text):
+        """Process extracted text data from either PDF or DOCX."""
+        resume_data = {
+            "summary": "",
+            "skills": [],
+            "experience": [],
+            "projects": [],
+            "education": [],
+            "contact_info": {},
+            "raw_text": ""
+        }
+        
+        current_section = None
+        
+        for text in all_text:
+            if not text.strip():
+                continue
+                
+            # Identify sections
+            section = self._identify_section(text)
+            if section:
+                current_section = section
+                continue
+            
+            # Parse content based on current section
+            if current_section == "summary":
+                resume_data["summary"] = self._parse_summary(text, resume_data["summary"])
+            elif current_section == "skills":
+                resume_data["skills"].extend(self._parse_skills(text))
+            elif current_section == "experience":
+                resume_data["experience"].extend(self._parse_experience(text))
+            elif current_section == "projects":
+                resume_data["projects"].extend(self._parse_projects(text))
+            elif current_section == "education":
+                resume_data["education"].extend(self._parse_education(text))
+            elif current_section == "contact":
+                resume_data["contact_info"].update(self._parse_contact(text))
+        
+        # Join all text for backup processing
+        resume_data["raw_text"] = "\n".join(all_text)
+        
+        # If sections weren't clearly identified, try alternative parsing
+        if not resume_data["summary"] and not resume_data["skills"]:
+            resume_data = self._fallback_parsing(all_text, resume_data)
+        
+        # Clean up and deduplicate
+        resume_data = self._clean_resume_data(resume_data)
+        
+        logging.debug(f"Parsed resume data: {resume_data}")
+        return resume_data
+    
+    def _get_default_resume_data(self):
+        """Return default resume data structure."""
+        return {
+            "summary": "Professional with diverse experience",
+            "skills": ["Communication", "Teamwork", "Problem Solving"],
+            "experience": [],
+            "projects": [],
+            "education": [],
+            "contact_info": {},
+            "raw_text": ""
+        }
 
     def _identify_section(self, text):
         """Identify which section a paragraph belongs to."""

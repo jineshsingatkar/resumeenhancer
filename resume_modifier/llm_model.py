@@ -1,11 +1,23 @@
 import logging
 import re
+import os
+from openai import OpenAI
+import json
 
 class LLMModel:
     def __init__(self):
         """Initialize the LLM model for job description analysis."""
-        # Use rule-based NLP instead of heavy AI models for better compatibility
-        logging.info("LLM model initialized with rule-based analysis")
+        self.client = None
+        try:
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if api_key:
+                self.client = OpenAI(api_key=api_key)
+                logging.info("OpenAI client initialized successfully")
+            else:
+                logging.warning("No OpenAI API key found, using rule-based analysis")
+        except Exception as e:
+            logging.warning(f"Could not initialize OpenAI client: {e}")
+            self.client = None
 
     def parse_job_description(self, job_description):
         """
@@ -18,24 +30,56 @@ class LLMModel:
             list: List of extracted keywords and requirements
         """
         try:
-            # Clean and preprocess the job description
-            cleaned_text = self._clean_text(job_description)
-            
-            # Extract skills and keywords using multiple approaches
-            skills = self._extract_skills(cleaned_text)
-            requirements = self._extract_requirements(cleaned_text)
-            technologies = self._extract_technologies(cleaned_text)
-            
-            # Combine all extracted information
-            all_keywords = list(set(skills + requirements + technologies))
-            
-            # Limit to most relevant keywords (top 15)
-            return all_keywords[:15]
-            
+            if self.client:
+                return self._openai_parse_job_description(job_description)
+            else:
+                return self._rule_based_parse_job_description(job_description)
         except Exception as e:
             logging.error(f"Error parsing job description: {e}")
-            # Fallback to basic keyword extraction
             return self._basic_keyword_extraction(job_description)
+
+    def _openai_parse_job_description(self, job_description):
+        """Use OpenAI to parse job description intelligently."""
+        try:
+            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            # do not change this unless explicitly requested by the user
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": "You are an expert resume analyst. Extract key skills, technologies, requirements, and qualifications from job descriptions. Return only a JSON array of the most important keywords and requirements, limiting to 15 items."
+                    },
+                    {
+                        "role": "user", 
+                        "content": f"Extract key skills and requirements from this job description:\n\n{job_description}"
+                    }
+                ],
+                response_format={"type": "json_object"}
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            return result.get("keywords", [])[:15]
+            
+        except Exception as e:
+            logging.error(f"OpenAI parsing failed: {e}")
+            return self._rule_based_parse_job_description(job_description)
+
+    def _rule_based_parse_job_description(self, job_description):
+        """Fallback rule-based parsing method."""
+        # Clean and preprocess the job description
+        cleaned_text = self._clean_text(job_description)
+        
+        # Extract skills and keywords using multiple approaches
+        skills = self._extract_skills(cleaned_text)
+        requirements = self._extract_requirements(cleaned_text)
+        technologies = self._extract_technologies(cleaned_text)
+        
+        # Combine all extracted information
+        all_keywords = list(set(skills + requirements + technologies))
+        
+        # Limit to most relevant keywords (top 15)
+        return all_keywords[:15]
 
     def _clean_text(self, text):
         """Clean and normalize text."""

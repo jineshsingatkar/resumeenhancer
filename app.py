@@ -21,7 +21,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # Configuration
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'output'
-ALLOWED_EXTENSIONS = {'docx'}
+ALLOWED_EXTENSIONS = {'docx', 'pdf'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
@@ -56,14 +56,18 @@ def index():
                 return render_template('index.html')
 
             if not file or not allowed_file(file.filename):
-                flash('Please upload a valid DOCX file.', 'error')
+                flash('Please upload a valid DOCX or PDF file.', 'error')
                 return render_template('index.html')
 
             # Save uploaded file
-            filename = secure_filename(file.filename)
-            unique_filename = f"{uuid.uuid4()}_{filename}"
-            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-            file.save(upload_path)
+            if file.filename:
+                filename = secure_filename(file.filename)
+                unique_filename = f"{uuid.uuid4()}_{filename}"
+                upload_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                file.save(upload_path)
+            else:
+                flash('Invalid file name.', 'error')
+                return render_template('index.html')
 
             # Initialize LLM Model
             llm = LLMModel()

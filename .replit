@@ -2,7 +2,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["libjpeg_turbo", "libpng", "openssl", "pkg-config", "postgresql", "which"]
+packages = ["imagemagickBig", "libjpeg_turbo", "libpng", "openssl", "pkg-config", "postgresql", "which"]
 
 [deployment]
 deploymentTarget = "autoscale"
