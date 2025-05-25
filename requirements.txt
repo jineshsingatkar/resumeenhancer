@@ -1,0 +1,11 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-Bcrypt
+Flask-WTF
+WTForms
+python-dotenv
+python-docx
+PyPDF2
+openai
+psycopg2-binary 
