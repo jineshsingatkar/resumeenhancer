@@ -171,7 +171,7 @@
                             {% endif %}
                         {% endwith %}
 
-                        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                        <form id="uploadForm" method="POST" action="{{ url_for('upload_resume') }}" enctype="multipart/form-data">
                             {{ form.hidden_tag() }}
 
                             <!-- Template Selection -->
