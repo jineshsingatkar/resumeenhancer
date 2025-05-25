@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Processing - AI Resume Enhancer</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .batch-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--bs-warning) 0%, var(--bs-orange) 100%);
+            padding: 40px 0;
+        }
+        .batch-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .premium-banner {
+            background: linear-gradient(135deg, var(--bs-warning), var(--bs-danger));
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .file-zone {
+            border: 3px dashed var(--bs-warning);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(255, 193, 7, 0.05);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .file-zone:hover {
+            border-color: var(--bs-orange);
+            background: rgba(255, 133, 27, 0.1);
+        }
+        .file-zone.dragover {
+            border-color: var(--bs-success);
+            background: rgba(25, 135, 84, 0.1);
+            transform: scale(1.02);
+        }
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 10px;
+            padding: 15px;
+            background: var(--bs-gray-50);
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .batch-progress {
+            display: none;
+            margin-top: 30px;
+        }
+        .progress-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .processing-icon {
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .premium-feature {
+            position: relative;
+            overflow: hidden;
+        }
+        .premium-feature::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        @media (max-width: 768px) {
+            .batch-container {
+                padding: 20px 0;
+            }
+            .file-zone {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="batch-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="text-white mb-3">
+                    <i class="fas fa-layer-group me-3"></i>Batch Resume Processing
+                </h1>
+                <p class="text-light fs-5">Process multiple resumes simultaneously with AI optimization</p>
+            </div>
+
+            <!-- Premium Banner -->
+            <div class="premium-banner premium-feature">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-2">
+                            <i class="fas fa-crown me-2"></i>Premium Feature Unlocked!
+                        </h4>
+                        <p class="mb-0">Process up to 50 resumes simultaneously with advanced AI optimization</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="badge bg-light text-dark fs-6 px-3 py-2">
+                            {{ current_user.subscription_type.title() }} Plan
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="batch-card p-5">
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form id="batchForm" method="POST" enctype="multipart/form-data">
+                            {{ form.hidden_tag() }}
+
+                            <!-- Template Selection -->
+                            <div class="mb-5">
+                                <h5 class="mb-4">
+                                    <i class="fas fa-palette me-2"></i>Select Template for All Resumes
+                                </h5>
+                                <div class="row">
+                                    {% for template in templates %}
+                                    <div class="col-lg-3 col-md-6 mb-3">
+                                        <div class="template-preview card h-100" onclick="selectTemplate({{ template.id }}, this)">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-file-alt fa-2x text-warning mb-3"></i>
+                                                <h6 class="card-title">{{ template.name }}</h6>
+                                                <p class="card-text small text-muted">{{ template.description[:40] }}...</p>
+                                                {% if template.is_premium %}
+                                                <span class="badge bg-warning">Premium</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {{ form.template_id(class="d-none", id="selectedTemplate") }}
+                            </div>
+
+                            <!-- Job Description -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-briefcase me-2"></i>Target Job Description
+                                    <span class="badge bg-danger">Required for Batch</span>
+                                </h5>
+                                {{ form.job_description(class="form-control", rows="6", placeholder="Enter the job description that all resumes will be optimized for. This ensures consistent targeting across all processed resumes.", required=True) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    All resumes will be optimized for this specific job description to ensure consistency.
+                                </div>
+                            </div>
+
+                            <!-- Multiple File Upload -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload Multiple Resumes
+                                </h5>
+                                <div class="file-zone" id="fileZone">
+                                    {{ form.resume_files(class="d-none", id="resumeFiles", multiple=True, accept=".pdf,.docx") }}
+                                    <div class="upload-prompt" id="uploadPrompt">
+                                        <i class="fas fa-layer-group fa-4x text-warning mb-3"></i>
+                                        <h4 class="mb-3">Drop Multiple Resume Files Here</h4>
+                                        <p class="text-muted mb-4">or click to browse and select multiple files</p>
+                                        <button type="button" class="btn btn-warning btn-lg" onclick="document.getElementById('resumeFiles').click()">
+                                            <i class="fas fa-folder-open me-2"></i>Select Files
+                                        </button>
+                                        <div class="mt-3">
+                                            <small class="text-muted">
+                                                Supports PDF and DOCX files • Maximum 50 files • 16MB per file
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- File List -->
+                                <div id="fileListContainer" class="d-none mt-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-list me-2"></i>Selected Files (<span id="fileCount">0</span>)
+                                        </h6>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearFiles()">
+                                            <i class="fas fa-trash me-1"></i>Clear All
+                                        </button>
+                                    </div>
+                                    <div class="file-list" id="fileList">
+                                        <!-- Files will be listed here -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Processing Options -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-cogs me-2"></i>Processing Options
+                                </h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="priorityProcessing" checked>
+                                            <label class="form-check-label" for="priorityProcessing">
+                                                <strong>Priority Processing</strong>
+                                                <small class="d-block text-muted">Process files faster with dedicated resources</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="enhancedAnalysis" checked>
+                                            <label class="form-check-label" for="enhancedAnalysis">
+                                                <strong>Enhanced AI Analysis</strong>
+                                                <small class="d-block text-muted">Deep learning optimization for better results</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-warning btn-lg px-5 py-3" id="submitBtn" disabled>
+                                    <i class="fas fa-rocket me-2"></i>
+                                    <span id="submitText">Start Batch Processing</span>
+                                    <div class="spinner-border spinner-border-sm ms-2 d-none" id="submitSpinner"></div>
+                                </button>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        Estimated processing time: <span id="estimatedTime">-</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Batch Progress -->
+                        <div class="batch-progress" id="batchProgress">
+                            <h5 class="mb-4">
+                                <i class="fas fa-tasks me-2"></i>Processing Status
+                            </h5>
+                            
+                            <div class="overall-progress mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span><strong>Overall Progress</strong></span>
+                                    <span id="overallPercent">0%</span>
+                                </div>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" id="overallProgress" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted">
+                                    <span id="processedCount">0</span> of <span id="totalCount">0</span> files processed
+                                </small>
+                            </div>
+
+                            <div id="fileProgress">
+                                <!-- Individual file progress will be shown here -->
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button class="btn btn-outline-warning" onclick="cancelBatch()" id="cancelBtn">
+                                    <i class="fas fa-stop me-2"></i>Cancel Processing
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Dashboard -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedTemplateId = 1;
+        let selectedFiles = [];
+        let batchId = null;
+
+        // Template selection
+        function selectTemplate(templateId, element) {
+            selectedTemplateId = templateId;
+            document.getElementById('selectedTemplate').value = templateId;
+            
+            // Update visual selection
+            document.querySelectorAll('.template-preview').forEach(t => t.classList.remove('border-warning'));
+            element.classList.add('border-warning');
+            
+            checkFormValidity();
+        }
+
+        // File handling
+        const fileZone = document.getElementById('fileZone');
+        const fileInput = document.getElementById('resumeFiles');
+        const fileListContainer = document.getElementById('fileListContainer');
+        const fileList = document.getElementById('fileList');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+
+        // Drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileZone.addEventListener(eventName, () => fileZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileZone.addEventListener(eventName, () => fileZone.classList.remove('dragover'), false);
+        });
+
+        fileZone.addEventListener('drop', handleDrop, false);
+        fileZone.addEventListener('click', () => fileInput.click());
+
+        function handleDrop(e) {
+            const files = Array.from(e.dataTransfer.files);
+            addFiles(files);
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            addFiles(files);
+        });
+
+        function addFiles(files) {
+            const validFiles = files.filter(file => {
+                const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                const maxSize = 16 * 1024 * 1024; // 16MB
+                
+                if (!validTypes.includes(file.type)) {
+                    alert(`${file.name}: Invalid file type. Only PDF and DOCX files are allowed.`);
+                    return false;
+                }
+                
+                if (file.size > maxSize) {
+                    alert(`${file.name}: File too large. Maximum size is 16MB.`);
+                    return false;
+                }
+                
+                return true;
+            });
+
+            selectedFiles = [...selectedFiles, ...validFiles];
+            
+            if (selectedFiles.length > 50) {
+                alert('Maximum 50 files allowed for batch processing.');
+                selectedFiles = selectedFiles.slice(0, 50);
+            }
+
+            updateFileList();
+            updateEstimatedTime();
+            checkFormValidity();
+        }
+
+        function updateFileList() {
+            if (selectedFiles.length === 0) {
+                fileListContainer.classList.add('d-none');
+                uploadPrompt.classList.remove('d-none');
+                return;
+            }
+
+            uploadPrompt.classList.add('d-none');
+            fileListContainer.classList.remove('d-none');
+            
+            document.getElementById('fileCount').textContent = selectedFiles.length;
+            
+            fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-${file.type.includes('pdf') ? 'pdf' : 'word'} text-${file.type.includes('pdf') ? 'danger' : 'primary'} me-3"></i>
+                            <div>
+                                <h6 class="mb-0">${file.name}</h6>
+                                <small class="text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            updateEstimatedTime();
+            checkFormValidity();
+        }
+
+        function clearFiles() {
+            selectedFiles = [];
+            fileInput.value = '';
+            updateFileList();
+            updateEstimatedTime();
+            checkFormValidity();
+        }
+
+        function updateEstimatedTime() {
+            const estimatedTimeElement = document.getElementById('estimatedTime');
+            if (selectedFiles.length === 0) {
+                estimatedTimeElement.textContent = '-';
+                return;
+            }
+            
+            const timePerFile = 45; // seconds
+            const totalSeconds = selectedFiles.length * timePerFile;
+            const minutes = Math.ceil(totalSeconds / 60);
+            
+            estimatedTimeElement.textContent = `${minutes} minute${minutes > 1 ? 's' : ''}`;
+        }
+
+        function checkFormValidity() {
+            const hasFiles = selectedFiles.length > 0;
+            const hasTemplate = selectedTemplateId > 0;
+            const hasJobDescription = document.getElementById('job_description').value.trim().length > 0;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = !(hasFiles && hasTemplate && hasJobDescription);
+        }
+
+        // Form submission
+        document.getElementById('batchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            startBatchProcessing();
+        });
+
+        function startBatchProcessing() {
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            const batchProgress = document.getElementById('batchProgress');
+
+            // Show processing UI
+            submitBtn.disabled = true;
+            submitText.textContent = 'Initializing...';
+            submitSpinner.classList.remove('d-none');
+            batchProgress.style.display = 'block';
+
+            // Set up progress tracking
+            document.getElementById('totalCount').textContent = selectedFiles.length;
+            document.getElementById('processedCount').textContent = '0';
+
+            // Generate batch ID
+            batchId = 'batch_' + Date.now();
+
+            // Create file progress items
+            const fileProgress = document.getElementById('fileProgress');
+            fileProgress.innerHTML = selectedFiles.map((file, index) => `
+                <div class="progress-item" id="file_${index}">
+                    <div class="me-3">
+                        <i class="fas fa-clock text-muted" id="icon_${index}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${file.name}</h6>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" id="progress_${index}" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="ms-3">
+                        <span class="badge bg-secondary" id="status_${index}">Queued</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // Start processing simulation
+            processNextFile(0);
+        }
+
+        function processNextFile(index) {
+            if (index >= selectedFiles.length) {
+                // All files processed
+                completeBatchProcessing();
+                return;
+            }
+
+            const file = selectedFiles[index];
+            const progressBar = document.getElementById(`progress_${index}`);
+            const statusBadge = document.getElementById(`status_${index}`);
+            const icon = document.getElementById(`icon_${index}`);
+
+            // Update status to processing
+            statusBadge.textContent = 'Processing';
+            statusBadge.className = 'badge bg-warning';
+            icon.className = 'fas fa-cog processing-icon text-warning';
+
+            // Simulate file processing with progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Mark as completed
+                    statusBadge.textContent = 'Completed';
+                    statusBadge.className = 'badge bg-success';
+                    icon.className = 'fas fa-check-circle text-success';
+                    
+                    // Update overall progress
+                    const processedCount = index + 1;
+                    document.getElementById('processedCount').textContent = processedCount;
+                    const overallPercent = (processedCount / selectedFiles.length) * 100;
+                    document.getElementById('overallPercent').textContent = Math.round(overallPercent) + '%';
+                    document.getElementById('overallProgress').style.width = overallPercent + '%';
+                    
+                    // Process next file after a short delay
+                    setTimeout(() => processNextFile(index + 1), 500);
+                }
+            }, 100);
+        }
+
+        function completeBatchProcessing() {
+            const submitText = document.getElementById('submitText');
+            const submitSpinner = document.getElementById('submitSpinner');
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            submitText.textContent = 'Processing Complete!';
+            submitSpinner.classList.add('d-none');
+            cancelBtn.innerHTML = '<i class="fas fa-download me-2"></i>Download All';
+            cancelBtn.className = 'btn btn-success';
+            cancelBtn.onclick = downloadBatchResults;
+
+            // Show success message
+            setTimeout(() => {
+                alert(`Batch processing complete! ${selectedFiles.length} resumes have been enhanced and are ready for download.`);
+            }, 1000);
+        }
+
+        function cancelBatch() {
+            if (confirm('Are you sure you want to cancel the batch processing?')) {
+                location.reload();
+            }
+        }
+
+        function downloadBatchResults() {
+            alert('Batch download will start shortly. All enhanced resumes will be packaged in a ZIP file.');
+            // Implement batch download functionality
+        }
+
+        // Job description validation
+        document.getElementById('job_description').addEventListener('input', checkFormValidity);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select first template by default
+            const firstTemplate = document.querySelector('.template-preview');
+            if (firstTemplate) {
+                selectTemplate(1, firstTemplate);
+            }
+        });
+    </script>
+</body>
+</html>

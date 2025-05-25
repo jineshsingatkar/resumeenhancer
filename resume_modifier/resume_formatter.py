@@ -158,6 +158,180 @@ class ResumeFormatter:
         
         return enhanced_projects
 
+    def create_enhanced_document(self, resume_data, output_path, template_id=1):
+        """
+        Create an enhanced resume document with professional formatting.
+        
+        Args:
+            resume_data (dict): Enhanced resume data
+            output_path (str): Path to save the output document
+            template_id (int): Template ID to use for formatting
+        """
+        try:
+            from docx import Document
+            from docx.shared import Inches, Pt
+            from docx.enum.text import WD_ALIGN_PARAGRAPH
+            from docx.oxml.shared import OxmlElement, qn
+            
+            # Create new document
+            doc = Document()
+            
+            # Set document margins
+            sections = doc.sections
+            for section in sections:
+                section.top_margin = Inches(0.5)
+                section.bottom_margin = Inches(0.5)
+                section.left_margin = Inches(0.75)
+                section.right_margin = Inches(0.75)
+            
+            # Add content based on template
+            self._add_header(doc, resume_data)
+            self._add_summary(doc, resume_data)
+            self._add_skills(doc, resume_data)
+            self._add_experience(doc, resume_data)
+            self._add_projects(doc, resume_data)
+            self._add_education(doc, resume_data)
+            
+            # Save document
+            doc.save(output_path)
+            return True
+            
+        except Exception as e:
+            print(f"Error creating document: {str(e)}")
+            return False
+    
+    def _add_header(self, doc, resume_data):
+        """Add header section with contact information"""
+        contact = resume_data.get('contact', {})
+        
+        # Name (Title)
+        name_paragraph = doc.add_paragraph()
+        name_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        name_run = name_paragraph.add_run(contact.get('name', 'Professional Resume'))
+        name_run.font.size = Pt(24)
+        name_run.bold = True
+        
+        # Contact information
+        if contact:
+            contact_paragraph = doc.add_paragraph()
+            contact_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            contact_info = []
+            if contact.get('email'):
+                contact_info.append(contact['email'])
+            if contact.get('phone'):
+                contact_info.append(contact['phone'])
+            if contact.get('location'):
+                contact_info.append(contact['location'])
+            
+            contact_run = contact_paragraph.add_run(' | '.join(contact_info))
+            contact_run.font.size = Pt(12)
+        
+        # Add spacing
+        doc.add_paragraph()
+    
+    def _add_summary(self, doc, resume_data):
+        """Add professional summary section"""
+        summary = resume_data.get('summary', '')
+        if summary:
+            heading = doc.add_paragraph()
+            heading_run = heading.add_run('PROFESSIONAL SUMMARY')
+            heading_run.font.size = Pt(14)
+            heading_run.bold = True
+            
+            summary_paragraph = doc.add_paragraph(summary)
+            summary_paragraph.style = 'Normal'
+            
+            doc.add_paragraph()
+    
+    def _add_skills(self, doc, resume_data):
+        """Add skills section"""
+        skills = resume_data.get('skills', [])
+        if skills:
+            heading = doc.add_paragraph()
+            heading_run = heading.add_run('CORE COMPETENCIES')
+            heading_run.font.size = Pt(14)
+            heading_run.bold = True
+            
+            # Format skills in columns
+            skills_text = ' • '.join(skills)
+            skills_paragraph = doc.add_paragraph(skills_text)
+            
+            doc.add_paragraph()
+    
+    def _add_experience(self, doc, resume_data):
+        """Add work experience section"""
+        experience = resume_data.get('experience', [])
+        if experience:
+            heading = doc.add_paragraph()
+            heading_run = heading.add_run('PROFESSIONAL EXPERIENCE')
+            heading_run.font.size = Pt(14)
+            heading_run.bold = True
+            
+            for exp in experience:
+                # Job title and company
+                job_paragraph = doc.add_paragraph()
+                title_run = job_paragraph.add_run(exp.get('title', 'Position'))
+                title_run.bold = True
+                title_run.font.size = Pt(12)
+                
+                company_run = job_paragraph.add_run(f" | {exp.get('company', 'Company')}")
+                company_run.font.size = Pt(12)
+                
+                # Dates
+                if exp.get('dates'):
+                    dates_paragraph = doc.add_paragraph(exp['dates'])
+                    dates_paragraph.style = 'Normal'
+                
+                # Description
+                if exp.get('description'):
+                    desc_paragraph = doc.add_paragraph(exp['description'])
+                    desc_paragraph.style = 'Normal'
+                
+                doc.add_paragraph()
+    
+    def _add_projects(self, doc, resume_data):
+        """Add projects section"""
+        projects = resume_data.get('projects', [])
+        if projects:
+            heading = doc.add_paragraph()
+            heading_run = heading.add_run('KEY PROJECTS')
+            heading_run.font.size = Pt(14)
+            heading_run.bold = True
+            
+            for project in projects:
+                # Project title
+                project_paragraph = doc.add_paragraph()
+                title_run = project_paragraph.add_run(project.get('title', 'Project'))
+                title_run.bold = True
+                title_run.font.size = Pt(12)
+                
+                # Description
+                if project.get('description'):
+                    desc_paragraph = doc.add_paragraph(project['description'])
+                    desc_paragraph.style = 'Normal'
+                
+                doc.add_paragraph()
+    
+    def _add_education(self, doc, resume_data):
+        """Add education section"""
+        education = resume_data.get('education', [])
+        if education:
+            heading = doc.add_paragraph()
+            heading_run = heading.add_run('EDUCATION')
+            heading_run.font.size = Pt(14)
+            heading_run.bold = True
+            
+            for edu in education:
+                edu_paragraph = doc.add_paragraph()
+                degree_run = edu_paragraph.add_run(edu.get('degree', 'Degree'))
+                degree_run.bold = True
+                
+                if edu.get('school'):
+                    school_run = edu_paragraph.add_run(f" | {edu['school']}")
+                
+                if edu.get('year'):
+                    year_paragraph = doc.add_paragraph(edu['year'])
+    
     def add_content(self, doc, resume_data):
         """
         Add formatted content to the Word document.
