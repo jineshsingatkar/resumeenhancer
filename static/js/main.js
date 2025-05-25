@@ -53,8 +53,9 @@ function validateForm() {
         const file = resumeFile.files[0];
         
         // Check file type
-        if (!file.name.toLowerCase().endsWith('.docx')) {
-            showFieldError(resumeFile, 'Please upload a DOCX file.');
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.docx') && !fileName.endsWith('.pdf')) {
+            showFieldError(resumeFile, 'Please upload a PDF or DOCX file.');
             isValid = false;
         }
         
@@ -263,8 +264,9 @@ function validateFileSelection(file) {
     fileInput.classList.remove('is-invalid', 'is-valid');
     
     // Validate file type
-    if (!file.name.toLowerCase().endsWith('.docx')) {
-        showFieldError(fileInput, 'Only DOCX files are supported.');
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith('.docx') && !fileName.endsWith('.pdf')) {
+        showFieldError(fileInput, 'Only PDF and DOCX files are supported.');
         return false;
     }
     
