@@ -3,16 +3,26 @@
   "builds": [
     {
       "src": "app.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
+      }
     }
   ],
   "routes": [
+    {
+      "src": "/api/health",
+      "dest": "app.py"
+    },
     {
       "src": "/(.*)",
       "dest": "app.py"
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.9"
+    "PYTHON_VERSION": "3.9",
+    "FLASK_ENV": "production",
+    "FLASK_APP": "app.py"
   }
 } 

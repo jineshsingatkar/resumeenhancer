@@ -23,6 +23,7 @@ from models import (db, User, ResumeTemplate, UserResume, JobApplication,
 from forms import (LoginForm, RegistrationForm, ResumeUploadForm, BatchUploadForm,
                   JobApplicationForm, ProfileForm, AdminUserForm, TemplateForm)
 from auth import admin_required, subscription_required
+import tempfile
 
 
 class Base(DeclarativeBase):
@@ -31,11 +32,15 @@ class Base(DeclarativeBase):
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET")
+app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")  # Add fallback for development
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Database configuration
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+database_url = os.environ.get("DATABASE_URL")
+if not database_url:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     'pool_pre_ping': True,
@@ -52,8 +57,8 @@ login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 
 # Upload configuration
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'output'
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', tempfile.gettempdir())
+OUTPUT_FOLDER = os.environ.get('OUTPUT_FOLDER', tempfile.gettempdir())
 TEMPLATE_FOLDER = 'templates/resume_templates'
 ALLOWED_EXTENSIONS = {'pdf', 'docx'}
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
@@ -63,14 +68,20 @@ app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 app.config['TEMPLATE_FOLDER'] = TEMPLATE_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
-# Ensure directories exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-os.makedirs(TEMPLATE_FOLDER, exist_ok=True)
+# Only create directories if we're not in a serverless environment
+if not os.environ.get('VERCEL'):
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    os.makedirs(TEMPLATE_FOLDER, exist_ok=True)
 
-# Initialize AI models
-llm_model = LLMModel()
-resume_scorer = ResumeScorer()
+# Initialize AI models with error handling
+try:
+    llm_model = LLMModel()
+    resume_scorer = ResumeScorer()
+except Exception as e:
+    app.logger.error(f"Failed to initialize AI models: {str(e)}")
+    llm_model = None
+    resume_scorer = None
 
 
 @login_manager.user_loader
@@ -569,6 +580,17 @@ def get_resume_score(resume_id):
     return jsonify({'error': 'Score not available'}), 404
 
 
+@app.route('/api/health')
+def health_check():
+    try:
+        # Test database connection
+        db.session.execute('SELECT 1')
+        return jsonify({"status": "healthy", "database": "connected"}), 200
+    except Exception as e:
+        app.logger.error(f"Health check failed: {str(e)}")
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
+
 # ============================================================================
 # UTILITY ROUTES
 # ============================================================================
@@ -630,7 +652,8 @@ def too_large(e):
 
 @app.errorhandler(500)
 def internal_error(error):
-    db.session.rollback()
+    app.logger.error(f"Internal server error: {str(error)}")
+    db.session.rollback()  # Roll back any failed database transactions
     return render_template('errors/500.html'), 500
 
 
