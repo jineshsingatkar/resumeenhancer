@@ -81,16 +81,16 @@ def index():
 
             # Check if file was uploaded
             if 'resume_file' not in request.files:
-                flash('No file uploaded.', 'error')
+                flash('No file uploaded. Please select a resume file.', 'error')
                 return render_template('index.html')
 
             file = request.files['resume_file']
-            if file.filename == '':
-                flash('No file selected.', 'error')
+            if not file or file.filename == '' or file.filename is None:
+                flash('No file selected. Please choose a PDF or DOCX file.', 'error')
                 return render_template('index.html')
 
-            if not file or not allowed_file(file.filename):
-                flash('Please upload a valid DOCX or PDF file.', 'error')
+            if not allowed_file(file.filename):
+                flash('Invalid file type. Please upload a PDF or DOCX file only.', 'error')
                 return render_template('index.html')
 
             # Save uploaded file

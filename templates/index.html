@@ -90,37 +90,14 @@
                                     <i class="fas fa-cloud-upload-alt me-2"></i>
                                     Resume File (PDF or DOCX)
                                 </label>
-                                <div class="upload-area" id="uploadArea">
-                                    <input 
-                                        type="file" 
-                                        class="d-none" 
-                                        id="resume_file" 
-                                        name="resume_file" 
-                                        accept=".docx,.pdf"
-                                        required
-                                    >
-                                    <div class="upload-content text-center">
-                                        <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
-                                        <h5 class="mb-2">Drag & Drop or Click to Upload</h5>
-                                        <p class="text-muted mb-3">
-                                            Support for PDF and DOCX files<br>
-                                            <small>Maximum file size: 16MB</small>
-                                        </p>
-                                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('resume_file').click()">
-                                            <i class="fas fa-folder-open me-2"></i>
-                                            Choose File
-                                        </button>
-                                    </div>
-                                    <div class="upload-success d-none">
-                                        <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
-                                        <h6 class="file-name mb-2"></h6>
-                                        <p class="file-details text-muted mb-3"></p>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetFileUpload()">
-                                            <i class="fas fa-times me-1"></i>
-                                            Change File
-                                        </button>
-                                    </div>
-                                </div>
+                                <input 
+                                    type="file" 
+                                    class="form-control" 
+                                    id="resume_file" 
+                                    name="resume_file" 
+                                    accept=".docx,.pdf"
+                                    required
+                                >
                             </div>
 
                             <!-- Processing Instructions -->

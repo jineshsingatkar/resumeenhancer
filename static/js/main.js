@@ -43,7 +43,7 @@ function validateForm() {
     }
     
     // Validate file upload
-    if (!resumeFile.files.length) {
+    if (!resumeFile || !resumeFile.files || !resumeFile.files.length) {
         showFieldError(resumeFile, 'Please select a resume file.');
         isValid = false;
     } else {
